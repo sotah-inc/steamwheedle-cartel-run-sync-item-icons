@@ -1,0 +1,48 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['pull', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build:latest']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', './build-env.Dockerfile',
+      '-t', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build',
+      '--cache-from', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build:latest',
+      '.'
+    ]
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'tag',
+      'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build',
+      'steamwheedle-cartel/run-sync-item-icons/build'
+    ]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['pull', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime:latest']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', './runtime-env.Dockerfile',
+      '-t', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime',
+      '--cache-from', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime:latest',
+      '.'
+    ]
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime'
+    ]
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'beta', 'run', 'deploy',
+      'run-sync-item-icons',
+      '--image', 'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime',
+      '--region', 'us-central1',
+      '--platform', 'managed',
+      '--no-allow-unauthenticated',
+      '--timeout', '120s',
+      '--concurrency', '200'
+    ]
+images: [
+  'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build:latest',
+  'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/runtime:latest'
+]
