@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/sotah-inc/steamwheedle-cartel/pkg/act"
 	"github.com/sotah-inc/steamwheedle-cartel/pkg/logging"
 	"github.com/sotah-inc/steamwheedle-cartel/pkg/logging/stackdriver"
+	"github.com/sotah-inc/steamwheedle-cartel/pkg/sotah"
 	"github.com/sotah-inc/steamwheedle-cartel/pkg/sotah/codes"
 	"github.com/sotah-inc/steamwheedle-cartel/pkg/state/run"
 )
@@ -93,7 +95,29 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logging.Info("Received request")
 
-		msg := state.Run()
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			act.WriteErroneousErrorResponse(w, "Could not read request body", err)
+
+			logging.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("Could not read request body")
+
+			return
+		}
+
+		payloads, err := sotah.NewIconItemsPayloads(string(body))
+		if err != nil {
+			act.WriteErroneousErrorResponse(w, "Could not decode request body", err)
+
+			logging.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("Could not decode request body")
+
+			return
+		}
+
+		msg := state.Run(payloads)
 		switch msg.Code {
 		case codes.Ok:
 			w.WriteHeader(http.StatusCreated)
