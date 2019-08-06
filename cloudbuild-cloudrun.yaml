@@ -40,7 +40,8 @@ steps:
       '--platform', 'managed',
       '--no-allow-unauthenticated',
       '--timeout', '120s',
-      '--concurrency', '200'
+      '--concurrency', '200',
+      '--memory', '512M'
     ]
 images: [
   'gcr.io/$PROJECT_ID/steamwheedle-cartel/run-sync-item-icons/build:latest',
